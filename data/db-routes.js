@@ -84,10 +84,9 @@ route.post('/', async (req, res) => {
 
 route.post('/:id/comments', async (req, res) => {
 	try {
-		const post = await Posts.findById(req.params.id);
+		const post = Posts.findById(req.params.id);
 		if (post) {
-			// const commentInfo = { ...req.body };
-			const commentInfo = { ...req.body, post_id: req.params.id, post: post };
+			const commentInfo = { ...req.body, post_id: req.params.id };
 			if (commentInfo.text) {
 				const comment = await Posts.insertComment(commentInfo);
 				res.status(201).json(comment);
