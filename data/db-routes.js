@@ -15,7 +15,7 @@ route.get('/', async (req, res) => {
 
 route.get('/:id', async (req, res) => {
 	try {
-		const post = await Hubs.findById(req.params.id);
+		const post = await Posts.findById(req.params.id);
 
 		if (post) {
 			res.status(200).json(post);
@@ -54,15 +54,57 @@ route.delete('/:id', async (req, res) => {
 	try {
 		const count = await Posts.remove(req.params.id);
 		if (count > 0) {
-			res.status(200).json({ message: 'The hub has been nuked' });
+			res.status(200).json({ message: 'The post has been deleted' });
 		} else {
-			res.status(404).json({ message: 'The hub could not be found' });
+			res
+				.status(404)
+				.json({ message: 'The post with the specified ID does not exist.' });
 		}
 	} catch (error) {
-		// log error to database
-		console.log(error);
+		res.status(500).json({ error: 'The post could not be removed' });
+	}
+});
+
+route.post('/', async (req, res) => {
+	try {
+		if (!req.body.title || !req.body.contents) {
+			res.status(400).json({
+				errorMessage: 'Please provide title and contents for the post.',
+			});
+		} else {
+			const post = await Posts.add(req.body);
+			res.status(201).json(post);
+		}
+	} catch (error) {
 		res.status(500).json({
-			message: 'Error removing the hub',
+			error: 'There was an error while saving the post to the database',
 		});
+	}
+});
+
+route.post('/:id/comments', async (req, res) => {
+	const commentInfo = { ...req.body, hub_id: req.params.id };
+	try {
+		const post = await Posts.findById(req.params.id);
+		if (post) {
+			if (commentInfo.text) {
+				const comment = await Posts.insertComment(commentInfo);
+				res.status(201).json(comment);
+			} else {
+				res
+					.status(400)
+					.json({ errorMessage: 'Please provide text for the comment.' });
+			}
+		} else {
+			res
+				.status(404)
+				.json({ message: 'The post with the specified ID does not exist.' });
+		}
+	} catch (error) {
+		res
+			.status(500)
+			.json({
+				error: 'There was an error while saving the comment to the database',
+			});
 	}
 });
