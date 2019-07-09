@@ -1,5 +1,5 @@
 const express = require('express');
-const Posts = require('./data/db');
+const Posts = require('./db');
 const route = express.Router();
 
 route.get('/', async (req, res) => {
@@ -36,8 +36,8 @@ route.get('/:id/comments', async (req, res) => {
 		const { id } = req.params;
 		const post = await Posts.findById(id);
 		if (post) {
-			const post = await Posts.findPostComments(id);
-			res.status(200).json(post);
+			const comments = await Posts.findPostComments(id);
+			res.status(200).json(comments);
 		} else {
 			res
 				.status(404)
@@ -72,7 +72,7 @@ route.post('/', async (req, res) => {
 				errorMessage: 'Please provide title and contents for the post.',
 			});
 		} else {
-			const post = await Posts.add(req.body);
+			const post = await Posts.insert(req.body);
 			res.status(201).json(post);
 		}
 	} catch (error) {
@@ -83,10 +83,11 @@ route.post('/', async (req, res) => {
 });
 
 route.post('/:id/comments', async (req, res) => {
-	const commentInfo = { ...req.body, hub_id: req.params.id };
 	try {
 		const post = await Posts.findById(req.params.id);
 		if (post) {
+			// const commentInfo = { ...req.body };
+			const commentInfo = { ...req.body, post_id: req.params.id, post: post };
 			if (commentInfo.text) {
 				const comment = await Posts.insertComment(commentInfo);
 				res.status(201).json(comment);
@@ -112,13 +113,13 @@ route.put('/:id', async (req, res) => {
 		const { id } = req.params;
 		const post = await Posts.findById(id);
 		if (post) {
-			if (!req.body.title || req.body.contents) {
+			if (!req.body.title || !req.body.contents) {
 				res.status(400).json({
 					errorMessage: 'Please provide title and contents for the post.',
 				});
 			} else {
-				await Posts.update(id, req.body);
-				res.status(200).json(post);
+				const postUpdated = await Posts.update(id, req.body);
+				res.status(200).json(postUpdated);
 			}
 		} else {
 			res
@@ -131,3 +132,5 @@ route.put('/:id', async (req, res) => {
 			.json({ error: 'The post information could not be modified.' });
 	}
 });
+
+module.exports = route;
