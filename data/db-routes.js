@@ -101,10 +101,33 @@ route.post('/:id/comments', async (req, res) => {
 				.json({ message: 'The post with the specified ID does not exist.' });
 		}
 	} catch (error) {
+		res.status(500).json({
+			error: 'There was an error while saving the comment to the database',
+		});
+	}
+});
+
+route.put('/:id', async (req, res) => {
+	try {
+		const { id } = req.params;
+		const post = await Posts.findById(id);
+		if (post) {
+			if (!req.body.title || req.body.contents) {
+				res.status(400).json({
+					errorMessage: 'Please provide title and contents for the post.',
+				});
+			} else {
+				await Posts.update(id, req.body);
+				res.status(200).json(post);
+			}
+		} else {
+			res
+				.status(404)
+				.json({ message: 'The post with the specified ID does not exist.' });
+		}
+	} catch (error) {
 		res
 			.status(500)
-			.json({
-				error: 'There was an error while saving the comment to the database',
-			});
+			.json({ error: 'The post information could not be modified.' });
 	}
 });
